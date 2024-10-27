@@ -1,9 +1,9 @@
 import os
-from pytube import YouTube
+import yt_dlp
 
 def download_youtube_video():
     # Ask user for the YouTube video URL
-    url = input("Enter the YouTube video URL: ")
+    url = input("Enter the YouTube video URL: ").strip()
     if not url:
         print("No URL provided. Exiting...")
         return
@@ -13,7 +13,6 @@ def download_youtube_video():
     if not output_path:
         output_path = '.'
     else:
-        # Remove any surrounding quotes
         output_path = output_path.replace('"', '').replace("'", '')
 
     # Create directory if it doesn't exist
@@ -25,21 +24,18 @@ def download_youtube_video():
             return
 
     try:
-        # Create YouTube object
-        yt = YouTube(url)
+        # Set download options for a single, combined video+audio file
+        ydl_opts = {
+            'format': 'best[ext=mp4]',  # Download best available video with audio as a single file
+            'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
+            'noplaylist': True,  # Ensure only a single video is downloaded
+        }
 
-        # Get the highest resolution stream available
-        video_stream = yt.streams.filter(file_extension='mp4').get_highest_resolution()
+        # Download video using yt-dlp
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
 
-        # Display video details
-        print(f"\nTitle: {yt.title}")
-        print(f"Views: {yt.views:,}")
-        print("Downloading...\n")
-
-        # Download the video
-        video_stream.download(output_path=output_path)
-
-        print(f"Download complete! Saved at: {os.path.join(output_path, yt.title + '.mp4')}")
+        print(f"Download complete! Saved at: {output_path}")
     except Exception as e:
         print(f"An error occurred: {e}")
 
