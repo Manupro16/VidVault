@@ -9,13 +9,20 @@ def download_youtube_video():
         return
 
     # Ask user for the output folder
-    output_path = input("Enter the output folder path (leave blank for current folder): ")
+    output_path = input("Enter the output folder path (leave blank for current folder): ").strip()
     if not output_path:
         output_path = '.'
+    else:
+        # Remove any surrounding quotes
+        output_path = output_path.replace('"', '').replace("'", '')
 
     # Create directory if it doesn't exist
     if not os.path.exists(output_path):
-        os.makedirs(output_path)
+        try:
+            os.makedirs(output_path)
+        except OSError as e:
+            print(f"Error creating directory: {e}")
+            return
 
     try:
         # Create YouTube object
