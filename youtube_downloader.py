@@ -1,44 +1,49 @@
 import os
 import yt_dlp
+from urllib.parse import urlparse
 
-def download_youtube_video():
-    # Ask user for the YouTube video URL
-    url = input("Enter the YouTube video URL: ").strip()
-    if not url:
-        print("No URL provided. Exiting...")
-        return
+def sanitize_filename(title):
+    """Remove invalid characters from filenames"""
+    return "".join(c if c.isalnum() or c in " -_." else "_" for c in title)
 
-    # Ask user for the output folder
-    output_path = input("Enter the output folder path (leave blank for current folder): ").strip()
-    if not output_path:
-        output_path = '.'
-    else:
-        output_path = output_path.replace('"', '').replace("'", '')
+def download_video():
+    url = input("Enter YouTube video URL: ").strip()
+    custom_title = input("Enter title for video: ").strip()
+    save_dir = input("Save directory path: ").strip()
 
-    # Create directory if it doesn't exist
-    if not os.path.exists(output_path):
-        try:
-            os.makedirs(output_path)
-        except OSError as e:
-            print(f"Error creating directory: {e}")
-            return
+    # Sanitize inputs
+    safe_title = sanitize_filename(custom_title)
+    os.makedirs(save_dir, exist_ok=True)
+
+    ydl_opts = {
+        'outtmpl': os.path.join(save_dir, f'{safe_title}.%(ext)s'),
+        'format': 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+        'merge_output_format': 'mp4',
+        'retries': 3,
+        'nooverwrites': True,
+        'writethumbnail': True,
+        'postprocessors': [{
+            'key': 'FFmpegMetadata',
+        }],
+        'progress_hooks': [lambda d: print_progress(d)],
+    }
 
     try:
-        # Set download options for best video and audio
-        ydl_opts = {
-            'format': 'bestvideo+bestaudio/best',  # Download best video and audio available
-            'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
-            'merge_output_format': 'mp4',  # Merge output to mp4 format
-            'noplaylist': True,  # Ensure only a single video is downloaded
-        }
-
-        # Download video using yt-dlp
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([url])
-
-        print(f"Download complete! Saved at: {output_path}")
+        print(f"\n✅ Download complete: {os.path.join(save_dir, safe_title)}.mp4")
+    except yt_dlp.utils.DownloadError as e:
+        print(f"\n❌ Download failed: {str(e).split(';')[0]}")
     except Exception as e:
-        print(f"An error occurred: {e}")
+        print(f"\n⚠️ Unexpected error: {e}")
+
+def print_progress(d):
+    if d['status'] == 'downloading':
+        progress = d.get('_percent_str', 'N/A')
+        speed = d.get('_speed_str', 'N/A')
+        eta = d.get('_eta_str', 'N/A')
+        print(f"\r📥 Downloading... {progress} @ {speed} | ETA: {eta}", end='')
 
 if __name__ == "__main__":
-    download_youtube_video()
+    print("YouTube Video Downloader (yt-dlp)")
+    download_video()
