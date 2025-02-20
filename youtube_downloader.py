@@ -24,10 +24,11 @@ def download_youtube_video():
             return
 
     try:
-        # Set download options for a single, combined video+audio file
+        # Set download options for best video and audio
         ydl_opts = {
-            'format': 'best[ext=mp4]',  # Download best available video with audio as a single file
+            'format': 'bestvideo+bestaudio/best',  # Download best video and audio available
             'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
+            'merge_output_format': 'mp4',  # Merge output to mp4 format
             'noplaylist': True,  # Ensure only a single video is downloaded
         }
 
